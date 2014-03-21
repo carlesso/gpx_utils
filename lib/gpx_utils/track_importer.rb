@@ -12,10 +12,20 @@ module GpxUtils
     end
 
     attr_reader :coords
+    def add_data(raw_data)
+      doc = Nokogiri::XML(raw_data)
+      parse_doc(doc)
+    end
 
     def add_file(path)
       f = File.new(path)
       doc = Nokogiri::XML(f)
+      res = parse_doc(doc)
+      f.close
+      res
+    end
+
+    def parse_doc(doc)
       doc.remove_namespaces!
       a = Array.new
       error_count = 0
@@ -37,7 +47,6 @@ module GpxUtils
 
       end
 
-      f.close
 
       @coords += a
       @coords = @coords.sort { |b, c| b[:time] <=> c[:time] }
