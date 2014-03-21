@@ -6,9 +6,10 @@ require 'nokogiri'
 # Simple parsing GPX file
 module GpxUtils
   class TrackImporter
+    attr_accessor :tracks, :node
 
     def initialize
-      @coords = Array.new
+      self.tracks = Array.new
     end
 
     attr_reader :coords
@@ -27,29 +28,15 @@ module GpxUtils
 
     def parse_doc(doc)
       doc.remove_namespaces!
+      self.node = doc
       a = Array.new
       error_count = 0
 
-      trackpoints = doc.xpath('//gpx/trk/trkseg/trkpt')
-      trackpoints.each do |wpt|
-        w = {
-          :lat => wpt.xpath('@lat').to_s.to_f,
-          :lon => wpt.xpath('@lon').to_s.to_f,
-          :time => proc_time(wpt.xpath('time').children.first.to_s),
-          :alt => wpt.xpath('ele').children.first.to_s.to_f
-        }
-
-        if self.class.coord_valid?(w[:lat], w[:lon], w[:alt], w[:time])
-          a << w
-        else
-          error_count += 1
-        end
-
+      _tracks = doc.css('gpx trk')
+      _tracks.each do |track|
+        tracks << Track.new(track)
       end
 
-
-      @coords += a
-      @coords = @coords.sort { |b, c| b[:time] <=> c[:time] }
     end
 
     # Only import valid coords
